@@ -131,7 +131,9 @@ export default {
     reversedContent() {
       try {
         return this.content.slice().reverse()
-      } catch (e) {}
+      } catch (e) {
+        console.log('жопа')
+      }
     },
     contentShow() {
       if (Object.keys(this.content).length === 0) {
