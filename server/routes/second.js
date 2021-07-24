@@ -9,7 +9,6 @@ const Second = {
     const DB = await indexModel.find().lean()
     const data = {
       DB: DB,
-      alert: Alert('Привет', 'Это сайт Миши, спасибо что пришел)', 'success'),
     }
     console.log(data.DB)
     res.status(200).json(data)
@@ -55,11 +54,15 @@ const Second = {
       await indexModel.deleteOne({ _id: id })
       const DB = await indexModel.find().lean()
       const data = {
-        DB: DB,
+        deleted: true,
         alert: Alert('Удалено:', del, 'danger'),
       }
       res.status(201).json(data)
     } catch (err) {
+      const data = {
+        deleted: false,
+        alert: Alert('Error:', 'не удалилось', 'danger'),
+      }
       console.log('Не получилось удалить:', err)
     }
   },

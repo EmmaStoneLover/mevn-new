@@ -1,15 +1,22 @@
 <template>
   <div class="position-fixed bottom-0 end-0 m-3 mb-4">
-    <div id="mb" v-for="al in $store.state.alert" :key="al.id">
-      <span class="alert alert-dismissible" :class="al.how">
+    <div class="mb" v-show="Object.keys($store.state.alert.alert).length > 1">
+      <span
+        class="alert alert-dismissible"
+        @click="$store.commit(`alert/deleteAll`)"
+      >
+        <button type="button" class="btn-close"></button>
+      </span>
+    </div>
+    <div class="mb" v-for="al in $store.state.alert.alert" :key="al.id">
+      <span
+        class="alert alert-dismissible"
+        :class="al.how"
+        @click="$store.commit(`alert/deleteAlert`, al.id)"
+      >
         <strong>{{ al.strong }}</strong>
         <span>{{ al.msg }}</span>
-        <button
-          id="clsa"
-          type="button"
-          class="btn-close"
-          @click="$store.commit(`deleteAlert`, al.id)"
-        ></button>
+        <button class="btn-close"></button>
       </span>
     </div>
   </div>
@@ -18,15 +25,24 @@
 <script>
 export default {
   mounted() {
-    this.$store.commit('newAlert', ['Привет,', 'ты на сайте Миши', 'success'])
+    this.$store.commit('alert/newAlert', [
+      'Привет,',
+      'ты на сайте Миши',
+      'success',
+    ])
   },
 }
 </script>
 
 <style scoped>
-#mb {
+.mb {
   margin-top: 40px;
   text-align: right;
   z-index: 5;
+  cursor: pointer;
+}
+button:focus {
+  outline: none;
+  box-shadow: none;
 }
 </style>

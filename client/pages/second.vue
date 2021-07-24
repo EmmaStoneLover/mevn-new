@@ -2,7 +2,9 @@
   <div class="container">
     <br />
     <h1>Главная страница</h1>
-    <h3>Тут можно получить some staff</h3>
+    <h3 class="text-cuccess" @click="HowMuchText">
+      Тут можно получить some staff
+    </h3>
     <br />
 
     <form class="form mr-3" @submit.prevent="addText">
@@ -37,7 +39,7 @@
 
     <br />
 
-    <div v-show="contentShow">
+    <div v-show="getText" v-cloak>
       <form
         v-for="item in reversedContent"
         :key="item._id"
@@ -49,12 +51,9 @@
           <h5 class="card-title mt-1">
             {{ item.text }}
           </h5>
-          <button id="cls" type="submit" class="btn btn-close"></button>
+          <button id="cls" type="submit" class="btn-close"></button>
         </div>
       </form>
-    </div>
-    <div v-show="!contentShow">
-      <p>Вставить текст, плез</p>
     </div>
     <br />
   </div>
@@ -67,8 +66,7 @@ export default {
   data() {
     return {
       apiURL: 'http://localhost:9000/api',
-      content: [],
-      alert: [],
+      getText: true,
       form: {
         input: '',
         changed: false,
@@ -77,70 +75,97 @@ export default {
   },
   methods: {
     async addText() {
-      if (this.form.input.trim() !== '') {
-        const newText = {
-          text: this.form.input.trim(),
-          changed: this.form.changed,
-        }
-        this.content.push(newText)
-        await axios
-          .post(this.apiURL, newText)
-          .then((res) => {
-            this.form.input = ''
-            this.$store.commit('newAlert', [
-              res.data.alert.strong,
-              res.data.alert.msg,
-              res.data.alert.how,
+      if (this.getText === true) {
+        if (this.form.input.trim() !== '') {
+          const newText = {
+            text: this.form.input.trim(),
+            changed: this.form.changed,
+          }
+          this.$store.commit('text/addWillChangedText', newText)
+          try {
+            await axios.post(this.apiURL, newText).then((res) => {
+              this.$store.commit('text/addTextStor', res.data.DB)
+              this.$store.commit('alert/newAlert', [
+                res.data.alert.strong,
+                res.data.alert.msg,
+                res.data.alert.how,
+              ])
+              this.form.input = ''
+            })
+          } catch (err) {
+            this.getText = false
+            this.$store.commit('alert/newAlert', [
+              'Error:',
+              'Нет подключения к БД',
+              'danger',
             ])
-            this.content = res.data.DB
-          })
-          .catch((error) => {
-            console.log(error)
-          })
+            console.log('Нет подключения к БД', err)
+          }
+        } else {
+          this.$store.commit('alert/newAlert', [
+            'Нет',
+            'Сначала текст вставь',
+            'warning',
+          ])
+        }
       } else {
-        this.form = { input: 'СЮда вставить текст!' }
+        this.getText = false
+        this.$store.commit('alert/newAlert', [
+          'Error:',
+          'Нет подключения к БД',
+          'danger',
+        ])
       }
     },
-    async deleteText(id) {
-      await axios
-        .delete(`${this.apiURL}/delete/${id}`)
-        .then((res) => {
-          this.$store.commit('newAlert', [
+    async deleteText(_id) {
+      this.$store.commit('text/deleteTextStor', _id)
+      try {
+        await axios.delete(`${this.apiURL}/delete/${_id}`).then((res) => {
+          this.$store.commit('alert/newAlert', [
             res.data.alert.strong,
             res.data.alert.msg,
             res.data.alert.how,
           ])
-          this.content = res.data.DB
         })
-        .catch((error) => {
-          console.log(error)
-        })
+      } catch (err) {
+        this.getText = false
+        this.$store.commit('alert/newAlert', [
+          'Error:',
+          'Нет подключения к БД',
+          'danger',
+        ])
+        console.log('Нет подключения к БД', err)
+      }
+    },
+    HowMuchText() {
+      this.$store.commit('text/howMuchText')
+      this.$store.commit('alert/newAlert', [
+        'Записей: ',
+        this.$store.state.text.howMuch,
+        'info',
+      ])
     },
   },
   async mounted() {
     try {
       await axios.get(this.apiURL).then((res) => {
-        this.alert.push(res.data.alert)
-        this.content = res.data.DB
+        this.$store.commit('text/getTextStor', res.data.DB)
       })
     } catch (err) {
+      this.getText = false
+      this.$store.commit('alert/newAlert', [
+        'Error:',
+        'Нет подключения к БД',
+        'danger',
+      ])
       console.log('Ошибка с get: ', err)
     }
   },
   computed: {
     reversedContent() {
       try {
-        return this.content.slice().reverse()
-      } catch (e) {
-        console.log('жопа')
-      }
-    },
-    contentShow() {
-      if (Object.keys(this.content).length === 0) {
-        return false
-      } else {
-        return true
-      }
+        return this.$store.state.text.text.slice().reverse()
+      } catch (e) {}
     },
   },
 }
@@ -152,5 +177,12 @@ export default {
 }
 * {
   z-index: 0;
+}
+#cls {
+  padding-top: 33px;
+}
+button:focus {
+  outline: none;
+  box-shadow: none;
 }
 </style>
